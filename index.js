@@ -48,27 +48,41 @@ const appsCollection = database.collection("apps");
 
 //Apps Route
 
-app.get("/apps", async (req, res) => {
-  const limit = req.query.limit;
-  const skip = req.query.skip;
-  // const { limit = 0, skip = 0 } = req.query;
+app.get("/allapps", async (req, res) => {
+  // const limit = req.query.limit;
+  // const skip = req.query.skip;
+  const { limit = 0, skip = 0, sort = "size", order = "desc" } = req.query;
   console.log(limit);
   const fields = {
     title: 1,
     image: 1,
     rating: 1,
     downloads: 1,
+    size: 1,
   };
+  const sortBy = {};
+  sortBy[sort || "size"] = order === "asc" ? 1 : -1;
   const count = await appsCollection.countDocuments();
   console.log(count);
   try {
     const apps = await appsCollection
       .find()
+      .sort(sortBy)
       .project(fields)
       .limit(Number(limit))
       .skip(Number(skip))
       .toArray();
     res.send({ apps, total: count });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.get("/apps", async (req, res) => {
+  try {
+    const apps = await appsCollection.find().toArray();
+    res.send(apps);
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal Server Error" });
