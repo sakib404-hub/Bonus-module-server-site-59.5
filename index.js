@@ -51,7 +51,13 @@ const appsCollection = database.collection("apps");
 app.get("/allapps", async (req, res) => {
   // const limit = req.query.limit;
   // const skip = req.query.skip;
-  const { limit = 0, skip = 0, sort = "size", order = "desc" } = req.query;
+  const {
+    limit = 0,
+    skip = 0,
+    sort = "size",
+    order = "desc",
+    search,
+  } = req.query;
   console.log(limit);
   const fields = {
     title: 1,
@@ -60,13 +66,18 @@ app.get("/allapps", async (req, res) => {
     downloads: 1,
     size: 1,
   };
+  const query = search
+    ? {
+        title: { $regex: search, $options: "i" },
+      }
+    : {};
   const sortBy = {};
   sortBy[sort || "size"] = order === "asc" ? 1 : -1;
   const count = await appsCollection.countDocuments();
   console.log(count);
   try {
     const apps = await appsCollection
-      .find()
+      .find(query)
       .sort(sortBy)
       .project(fields)
       .limit(Number(limit))
